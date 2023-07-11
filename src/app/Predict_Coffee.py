@@ -1,5 +1,7 @@
 # Bibliotecas usadas
 
+from typing import Any, Dict, List, Tuple
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -10,7 +12,7 @@ from tensorflow.keras.layers import LSTM, Dense
 
 # Importei o dataset
 
-dados = pd.read_csv(
+dados: pd.DataFrame = pd.read_csv(
     '/home/renato/Projetos_Python/Machine_Learning_Cafe/coffee-price-prediction/data/processed/coffee.csv')
 
 # Transformando as datas no tipo 'datetime'
@@ -19,7 +21,7 @@ dados['Date'] = pd.to_datetime(dados['Date'], format='%Y-%m-%d')
 
 # Traduzindo o nome das colunas
 
-valores_traduzidos = {
+valores_traduzidos: Dict[str, str] = {
     'Date': 'Data',
     'Open': 'Abertura',
     'High': 'Maior_valor_dia',
@@ -37,46 +39,46 @@ dados = dados.drop(['Volume', 'Moeda'], axis=1)
 
 # Construindo o modelo de previsão do Keras - PT1
 
-window_size = 20
-prediction_size = 30
+window_size: int = 20
+prediction_size: int = 30
 
-X = []
-y = []
+X: List[List[float]] = []
+y: List[float] = []
 
-for i in range(len(dados)-window_size-prediction_size+1):
-    X.append(dados.iloc[i:i+window_size]["Fechamento_dia"].values)
-    y.append(dados.iloc[window_size+i+prediction_size-1]["Fechamento_dia"])
+for i in range(len(dados) - window_size - prediction_size + 1):
+    X.append(dados.iloc[i:i + window_size]["Fechamento_dia"].values)
+    y.append(dados.iloc[window_size + i +
+             prediction_size - 1]["Fechamento_dia"])
 
 X = np.array(X)
 y = np.array(y)
-
 
 X = X.reshape(len(X), window_size, 1)
 
 # Separação Treino e Teste
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=42)
+    X, y, test_size=0.3, random_state=42
+)
 
+# Construindo o modelo de previsão do Keras - PT2
 
-# Construindo o modelo de previsão do Keras  - PT2
+units: int = 150
 
-units = 150
+activation: str = "relu"
 
-activation = "relu"
-
-input_shape = (window_size, 1)
+input_shape: Tuple[int] = (window_size, 1)
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
-loss = "mean_squared_error"
+loss: str = "mean_squared_error"
 
 
-def r2_keras(y_true, y_pred):
+def r2_keras(y_true: Any, y_pred: Any) -> Any:
     SS_res = tf.keras.backend.sum(tf.keras.backend.square(y_true - y_pred))
     SS_tot = tf.keras.backend.sum(tf.keras.backend.square(
         y_true - tf.keras.backend.mean(y_true)))
-    return (1 - SS_res/(SS_tot + tf.keras.backend.epsilon()))
+    return (1 - SS_res / (SS_tot + tf.keras.backend.epsilon()))
 
 
 tf.random.set_seed(42)
@@ -119,7 +121,7 @@ history = model.fit(
 y_train_pred = model.predict(X_train).flatten()
 y_test_pred = model.predict(X_test).flatten()
 
-metrics = {
+metrics: Dict[str, Any] = {
     "MAE_train": mean_absolute_error(y_train, y_train_pred),
     "MAE_test": mean_absolute_error(y_test, y_test_pred),
     "R2_train": r2_score(y_train, y_train_pred),
